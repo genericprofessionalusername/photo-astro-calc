@@ -156,8 +156,8 @@
       </div>
     </div>
     <label for="sub">Your sub-exposure length (seconds)</label>
-    <input id="sub" type="number" step="1" min="0.1" value="60">
-    <div class="hint">One frame's shutter time. The calculator will tell you if it's longer or shorter than it needs to be.</div>
+    <input id="sub" type="number" step="1" min="0.1" value="30">
+    <div class="hint">One frame's shutter time. Default is 30 s — the longest most cameras allow (Canon, Nikon, Sony alike) without Bulb mode or an intervalometer. The calculator will tell you if it's longer or shorter than it needs to be.</div>
   </div>
 
   <div class="card">
@@ -379,41 +379,33 @@ const BORTLE = {
 const CAMERAS = [
   {id:"a7s", name:"Sony A7S (12 MP full frame)", pitch:8.44, sw:35.8, sh:23.9,
    note:"Fully measured dual-gain sensor: low-gain range ISO 125–1600, high-gain from ISO 2000.",
-   rn:{100:{v:3.56,s:"ver"},200:{v:3.56,s:"ver"},400:{v:3.56,s:"ver"},800:{v:3.56,s:"ver"},
-       1600:{v:3.56,s:"ver"},3200:{v:0.94,s:"ver"},6400:{v:0.94,s:"ver"},12800:{v:0.94,s:"ver"}}},
+   rn:{100:{v:3.56,s:"ver"},200:{v:3.56,s:"ver"},320:{v:3.56,s:"ver"},400:{v:3.56,s:"ver"},500:{v:3.56,s:"ver"},640:{v:3.56,s:"ver"},800:{v:3.56,s:"ver"},1250:{v:3.56,s:"ver"},1600:{v:3.56,s:"ver"},2000:{v:0.94,s:"ver"},2500:{v:0.94,s:"ver"},3200:{v:0.94,s:"ver"},6400:{v:0.94,s:"ver"},12800:{v:0.94,s:"ver"}}},
   {id:"90d", name:"Canon EOS 90D (32.5 MP APS-C)", pitch:3.19, sw:22.3, sh:14.9,
    note:"Anchors at ISO 800/1600/6400 are measured; other ISOs interpolated.",
-   rn:{100:{v:3.6,s:"int"},200:{v:3.1,s:"int"},400:{v:2.4,s:"int"},800:{v:1.74,s:"ver"},
-       1600:{v:1.45,s:"ver"},3200:{v:1.26,s:"int"},6400:{v:1.09,s:"ver"},12800:{v:1.05,s:"int"}}},
+   rn:{100:{v:3.6,s:"int"},200:{v:3.1,s:"int"},320:{v:2.6,s:"int"},400:{v:2.4,s:"int"},500:{v:2.2,s:"int"},640:{v:1.95,s:"int"},800:{v:1.74,s:"ver"},1250:{v:1.55,s:"int"},1600:{v:1.45,s:"ver"},2000:{v:1.4,s:"int"},2500:{v:1.33,s:"int"},3200:{v:1.26,s:"int"},6400:{v:1.09,s:"ver"},12800:{v:1.05,s:"int"}}},
   {id:"r6", name:"Canon EOS R6 (20 MP full frame)", pitch:6.56, sw:36.0, sh:24.0,
    note:"Measured: 1.26 e⁻ at ISO 12800, under 2 e⁻ from ISO 6400 up. Lower ISOs interpolated.",
-   rn:{100:{v:3.2,s:"int"},200:{v:3.0,s:"int"},400:{v:2.7,s:"int"},800:{v:2.4,s:"int"},
-       1600:{v:2.2,s:"int"},3200:{v:2.0,s:"int"},6400:{v:1.8,s:"int"},12800:{v:1.26,s:"ver"}}},
+   rn:{100:{v:3.2,s:"int"},200:{v:3,s:"int"},320:{v:2.8,s:"int"},400:{v:2.7,s:"int"},500:{v:2.6,s:"int"},640:{v:2.5,s:"int"},800:{v:2.4,s:"int"},1250:{v:2.3,s:"int"},1600:{v:2.2,s:"int"},2000:{v:2.15,s:"int"},2500:{v:2.1,s:"int"},3200:{v:2,s:"int"},6400:{v:1.8,s:"int"},12800:{v:1.26,s:"ver"}}},
   {id:"a7iii", name:"Sony A7 III (24 MP full frame)", pitch:5.93, sw:35.6, sh:23.8,
    note:"The dual-gain step at ISO 640 is documented; the electron values themselves are interpolated — check the chart for your body.",
-   rn:{100:{v:3.5,s:"int"},200:{v:3.5,s:"int"},400:{v:3.4,s:"int"},800:{v:1.6,s:"int"},
-       1600:{v:1.5,s:"int"},3200:{v:1.45,s:"int"},6400:{v:1.4,s:"int"},12800:{v:1.35,s:"int"}}},
+   rn:{100:{v:3.5,s:"int"},200:{v:3.5,s:"int"},320:{v:3.45,s:"int"},400:{v:3.4,s:"int"},500:{v:3.4,s:"int"},640:{v:1.65,s:"int"},800:{v:1.6,s:"int"},1250:{v:1.55,s:"int"},1600:{v:1.5,s:"int"},2000:{v:1.5,s:"int"},2500:{v:1.48,s:"int"},3200:{v:1.45,s:"int"},6400:{v:1.4,s:"int"},12800:{v:1.35,s:"int"}}},
   {id:"r7", name:"Canon EOS R7 (32.5 MP APS-C)", pitch:3.2, sw:22.3, sh:14.8,
    note:"Sensor specs measured (Clark). Read-noise values are interpolated — sits a little below the 90D at astro ISOs per photonstophotos comparisons; confirm on the chart. ⚠ Measured caveat: the R7 shows variable banding that does not subtract out and grows with exposure time, which limits how hard you can stretch faint detail. The frame counts here assume purely random noise, so treat them as optimistic on this body.",
-   rn:{100:{v:2.9,s:"int"},200:{v:2.6,s:"int"},400:{v:1.9,s:"int"},800:{v:1.6,s:"int"},
-       1600:{v:1.35,s:"int"},3200:{v:1.2,s:"int"},6400:{v:1.05,s:"int"},12800:{v:1.0,s:"int"}}},
+   rn:{100:{v:2.9,s:"int"},200:{v:2.6,s:"int"},320:{v:2.1,s:"int"},400:{v:1.9,s:"int"},500:{v:1.8,s:"int"},640:{v:1.7,s:"int"},800:{v:1.6,s:"int"},1250:{v:1.45,s:"int"},1600:{v:1.35,s:"int"},2000:{v:1.3,s:"int"},2500:{v:1.25,s:"int"},3200:{v:1.2,s:"int"},6400:{v:1.05,s:"int"},12800:{v:1,s:"int"}}},
   {id:"r5ii", name:"Canon EOS R5 Mark II (45 MP full frame)", pitch:4.39, sw:36.0, sh:24.0,
    note:"Measured anchor: 1.18 e⁻ at ISO 400; second gain mode from ISO 500. Other ISOs interpolated.",
-   rn:{100:{v:3.2,s:"int"},200:{v:3.0,s:"int"},400:{v:1.18,s:"ver"},800:{v:1.1,s:"int"},
-       1600:{v:1.05,s:"int"},3200:{v:1.0,s:"int"},6400:{v:0.95,s:"int"},12800:{v:0.9,s:"int"}}},
+   rn:{100:{v:3.2,s:"int"},200:{v:3,s:"int"},320:{v:2.9,s:"int"},400:{v:1.18,s:"ver"},500:{v:1.15,s:"int"},640:{v:1.13,s:"int"},800:{v:1.1,s:"int"},1250:{v:1.07,s:"int"},1600:{v:1.05,s:"int"},2000:{v:1.03,s:"int"},2500:{v:1.02,s:"int"},3200:{v:1,s:"int"},6400:{v:0.95,s:"int"},12800:{v:0.9,s:"int"}}},
   {id:"a7iv", name:"Sony A7 IV (33 MP full frame)", pitch:5.12, sw:35.9, sh:23.9,
    note:"Dual conversion gain step at ISO 400 is documented; electron values interpolated — check the chart.",
-   rn:{100:{v:3.4,s:"int"},200:{v:3.3,s:"int"},400:{v:1.5,s:"int"},800:{v:1.4,s:"int"},
-       1600:{v:1.3,s:"int"},3200:{v:1.25,s:"int"},6400:{v:1.2,s:"int"},12800:{v:1.15,s:"int"}}},
+   rn:{100:{v:3.4,s:"int"},200:{v:3.3,s:"int"},320:{v:3.2,s:"int"},400:{v:1.5,s:"int"},500:{v:1.48,s:"int"},640:{v:1.45,s:"int"},800:{v:1.4,s:"int"},1250:{v:1.35,s:"int"},1600:{v:1.3,s:"int"},2000:{v:1.28,s:"int"},2500:{v:1.27,s:"int"},3200:{v:1.25,s:"int"},6400:{v:1.2,s:"int"},12800:{v:1.15,s:"int"}}},
   {id:"z8", name:"Nikon Z8 (45.7 MP full frame)", pitch:4.35, sw:35.9, sh:23.9,
    note:"High-gain conversion from ISO 500 is documented (low-gain range tuned for ISO 64); electron values interpolated — check the chart.",
-   rn:{100:{v:3.0,s:"int"},200:{v:2.9,s:"int"},400:{v:2.8,s:"int"},800:{v:1.35,s:"int"},
-       1600:{v:1.3,s:"int"},3200:{v:1.25,s:"int"},6400:{v:1.2,s:"int"},12800:{v:1.15,s:"int"}}},
+   rn:{100:{v:3,s:"int"},200:{v:2.9,s:"int"},320:{v:2.85,s:"int"},400:{v:2.8,s:"int"},500:{v:1.45,s:"int"},640:{v:1.4,s:"int"},800:{v:1.35,s:"int"},1250:{v:1.32,s:"int"},1600:{v:1.3,s:"int"},2000:{v:1.28,s:"int"},2500:{v:1.27,s:"int"},3200:{v:1.25,s:"int"},6400:{v:1.2,s:"int"},12800:{v:1.15,s:"int"}}},
   {id:"other", name:"Other — enter everything manually", pitch:4.0, sw:23.5, sh:15.6,
    note:"Type your sensor's pixel pitch, dimensions, and read noise (from photonstophotos.net) directly.",
    rn:{}}
 ];
-const ISOS = [100,200,400,800,1600,3200,6400,12800];
+const ISOS = [100,200,320,400,500,640,800,1250,1600,2000,2500,3200,6400,12800];
 
 /* ---------- element refs ---------- */
 const $ = id => document.getElementById(id);
@@ -510,21 +502,38 @@ function calc(){
   const nMin=Math.max(REJECT_MIN,Nfor(snrMinT));
   const nDim=Math.max(nMin,Nfor(snrGoodT));
 
-  /* verdict */
-  $("vClass").textContent=skyLimited?"SKY-LIMITED":"READ-NOISE-LIMITED";
-  $("vClass").style.color=skyLimited?"var(--teal)":"var(--red)";
-  $("vDetail").textContent=skyLimited
-    ? `Your ${fmt(sub,0)} s subs collect ${fmt(skySignal,1)} e⁻ of sky per pixel — at or past the `+
-      `${C}× read-noise² threshold of ${fmt(C*rn2,1)} e⁻. Longer subs won't improve SNR; they only raise clipping risk.`
-    : `Your ${fmt(sub,0)} s subs collect ${fmt(skySignal,1)} e⁻ of sky per pixel — below the `+
-      `${C}× read-noise² threshold of ${fmt(C*rn2,1)} e⁻. Read noise is still costing you; expose longer or raise ISO.`;
+  /* verdict — graded, not binary: report where you sit on the continuum */
+  const swampRatio=skySignal/rn2;                          // × read-noise² actually achieved
+  const noisePen=Math.sqrt((skySignal+rn2)/skySignal)-1;   // per-sub noise excess vs ideal
+  const timePen=Math.pow(1+noisePen,2)-1;                  // extra integration to match ideal
+  let vName,vCol,vMsg;
+  const base=`Your ${fmt(sub,0)} s subs collect ${fmt(skySignal,1)} e⁻ of sky per pixel — `+
+    `${fmt(swampRatio,1)}× read-noise² (threshold ${C}×, i.e. ${fmt(C*rn2,1)} e⁻). `;
+  if(skyLimited||noisePen<=0.05){
+    vName="SKY-LIMITED"; vCol="var(--teal)";
+    vMsg=base+`Read noise adds only ~${fmt(Math.max(noisePen*100,0.1),1)}% noise per sub — negligible. `+
+      `Longer subs won't improve SNR; they only raise clipping risk.`;
+  }else if(rn>2){
+    vName="READ-NOISE-LIMITED"; vCol="var(--red)";
+    vMsg=base+`Read noise adds ~${fmt(noisePen*100,0)}% noise per sub (~${fmt(timePen*100,0)}% extra integration, `+
+      `already included in the frame counts below). This one has a free fix: raising ISO past the dual-gain step `+
+      `cuts read noise at no cost in light collected.`;
+  }else{
+    vName="READ NOISE PRICED IN"; vCol="var(--dim)";
+    vMsg=base+`Read noise adds ~${fmt(noisePen*100,0)}% noise per sub. The frame counts below already include `+
+      `this, so no action is needed — they are simply ~${fmt(timePen*100,0)}% higher than ideal subs would need. `+
+      `Lengthen subs to claw that back, if your shutter allows it.`;
+  }
+  $("vClass").textContent=vName;
+  $("vClass").style.color=vCol;
+  $("vDetail").textContent=vMsg;
   $("tOpt").textContent=isFinite(tOpt)?fmt(tOpt,tOpt<10?1:0)+" s":"—";
   $("thresh").textContent=`${fmt(skySignal,0)} / ${fmt(C*rn2,0)} e⁻`;
   $("threshD").textContent=`Sky electrons per pixel in one sub vs the swamp threshold (${C} × read noise²). `+
     `The sub is "sky-limited" once the left number reaches the right.`;
 
   /* frames */
-  const shots=(n)=>`${hm(n*sub)} total · ${fmt(gb(n,rawMB),1)} GB`;
+  const shots=(n)=>`${hm(n*sub)} (${fmt(n*sub,0)} s) total · ${fmt(gb(n,rawMB),1)} GB`;
   $("nMin").textContent=fmt(nMin,0);
   $("nMinD").textContent=`Reaches stacked SNR ≈ ${snrMinT} per pixel on a ${fmt(tsb,1)} mag/arcsec² target — `+
     `change the target above if that's not what you're shooting `+
@@ -535,7 +544,7 @@ function calc(){
 
   /* arbitrary storage */
   const anyN=Math.max(1,Math.round(num(el.anyN,200)));
-  $("anyOut").textContent=`${fmt(gb(anyN,rawMB),1)} GB · ${hm(anyN*sub)} of exposure`;
+  $("anyOut").textContent=`${fmt(gb(anyN,rawMB),1)} GB · ${hm(anyN*sub)} (${fmt(anyN*sub,0)} s) of exposure`;
 
   /* worksheet */
   const rows=[
