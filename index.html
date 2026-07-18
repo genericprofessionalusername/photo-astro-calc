@@ -226,6 +226,17 @@
             <input id="snrgood" type="number" step="1" min="5" value="20">
           </div>
         </div>
+        <div class="row2">
+          <div>
+            <label for="minframes">Frame floor <span class="badge b-rot">rule of thumb</span></label>
+            <input id="minframes" type="number" step="1" min="1" value="6">
+          </div>
+          <div></div>
+        </div>
+        <div class="hint">The frame floor exists for outlier rejection, not SNR — sigma-clip stacking
+          needs a crowd of frames to vote out satellites, planes, and hot pixels. ~10 is comfortable,
+          6 mostly works, 1 means every artifact in that frame is permanent. Set it to 1 to see pure
+          SNR-driven counts.</div>
         <div class="hint">SNR ≈ 5 is a common threshold for a rough but real detection;
           past SNR ≈ 20 each added hour buys little visible improvement, because noise only falls
           with the square root of frame count.</div>
@@ -422,7 +433,7 @@ const $ = id => document.getElementById(id);
 const el = {cam:$("camera"), pitch:$("pitch"), sw:$("sw"), sh:$("sh"), iso:$("iso"), rn:$("rn"),
   rnBadge:$("rnBadge"), camNote:$("camNote"), fl:$("fl"), fnum:$("fnum"), sub:$("sub"),
   bortle:$("bortle"), sqm:$("sqm"), lat:$("lat"), raw:$("raw"), qe:$("qe"), trans:$("trans"),
-  f0:$("f0"), swamp:$("swamp"), tsb:$("tsb"), snrmin:$("snrmin"), snrgood:$("snrgood"),
+  f0:$("f0"), swamp:$("swamp"), tsb:$("tsb"), snrmin:$("snrmin"), snrgood:$("snrgood"), minframes:$("minframes"),
   anyN:$("anyN")};
 
 /* ---------- populate selects ---------- */
@@ -459,7 +470,7 @@ el.cam.addEventListener("change",()=>{applyCamera();calc();});
 el.iso.addEventListener("change",()=>{applyRN();calc();});
 el.rn.addEventListener("input",()=>{el.rnBadge.innerHTML='<span class="badge b-int">manual</span>';calc();});
 el.bortle.addEventListener("change",()=>{applyBortle();calc();});
-["pitch","sw","sh","fl","fnum","sub","sqm","lat","raw","qe","trans","f0","swamp","snrmin","snrgood","anyN"]
+["pitch","sw","sh","fl","fnum","sub","sqm","lat","raw","qe","trans","f0","swamp","snrmin","snrgood","minframes","anyN"]
   .forEach(id=>$(id).addEventListener("input",calc));
 const tgtsel=$("tgtsel");
 tgtsel.addEventListener("change",()=>{
@@ -508,7 +519,7 @@ function calc(){
   const var1=(skyRate+tgtRate)*sub+rn2;                    // noise variance per sub (no dark current)
   const snr1=S1/Math.sqrt(var1);                           // SNR of one frame
   const Nfor=s=>Math.ceil(Math.pow(s/snr1,2));
-  const REJECT_MIN=10;                                     // rule of thumb: outlier rejection needs frames
+  const REJECT_MIN=Math.max(1,Math.round(num(el.minframes,6))); // user-set floor for outlier rejection
   const nMin=Math.max(REJECT_MIN,Nfor(snrMinT));
   const nDim=Math.max(nMin,Nfor(snrGoodT));
 
@@ -547,7 +558,7 @@ function calc(){
   $("nMin").textContent=fmt(nMin,0);
   $("nMinD").textContent=`Reaches stacked SNR ≈ ${snrMinT} per pixel on a ${fmt(tsb,1)} mag/arcsec² target — `+
     `change the target above if that's not what you're shooting `+
-    `(never fewer than ${REJECT_MIN} frames, so the stacker can reject planes and hot pixels — rule of thumb). ${shots(nMin)}.`;
+    (REJECT_MIN>1?`(floored at your ${REJECT_MIN}-frame minimum — below ~10 frames, outlier rejection of satellites and hot pixels gets weaker). `:`(no frame floor — outliers in any single frame are permanent). `)+`${shots(nMin)}.`;
   $("nDim").textContent=fmt(nDim,0);
   const cam=CAMERAS.find(c=>c.id===el.cam.value);
   const bandNote=(cam&&cam.banding&&S1<=5)
