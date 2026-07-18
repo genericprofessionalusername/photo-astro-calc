@@ -32,6 +32,13 @@
   }
   .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
   header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:26px}
+  /* Night-vision mode: one root-level filter recolors everything — text, badges,
+     and the SVG chart's hardcoded hex values alike — to dim red to preserve dark adaptation. */
+  html.night body{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-32deg) brightness(.62) contrast(1.05)}
+  #nightBtn{position:fixed;top:14px;right:14px;z-index:9;background:var(--panel-2);color:var(--dim);
+    border:1px solid var(--line);border-radius:8px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+  #nightBtn:hover{color:var(--star)}
+  html.night #nightBtn{color:var(--red);border-color:var(--red)}
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--red)}
   h1{font-family:var(--mono);font-weight:600;font-size:clamp(20px,3.4vw,28px);letter-spacing:-.01em;margin:6px 0 8px}
   header p{color:var(--dim);max-width:70ch}
@@ -97,6 +104,9 @@
 <div class="wrap">
 
 <header>
+  <button id="nightBtn" type="button"
+    onclick="document.documentElement.classList.toggle('night');this.textContent=document.documentElement.classList.contains('night')?'☀ Normal':'☾ Night vision'"
+    title="Red-light mode — preserves dark adaptation at the scope">☾ Night vision</button>
   <div class="eyebrow">Camera + lens on a star tracker</div>
   <h1>Frame &amp; sub-exposure calculator</h1>
   <p>Estimates how long each exposure should be and how many frames you need, from things you can
@@ -338,7 +348,7 @@
       For the newer bodies: Canon R5 II 1.18 e⁻ at ISO 400 with a second gain mode from ISO 500;
       Sony A7 IV dual-gain step at ISO 400; Nikon Z8 high-gain conversion from ISO 500;
       Canon R7 sensor geometry (22.3 × 14.8 mm, 3.2 µm) from direct measurement, read noise slightly
-      below the 90D per chart comparisons, plus a measured banding caveat noted in its preset.
+      below the 90D per chart comparisons; a measured banding caveat appears only when a faint target makes it relevant.
       Values marked <span class="badge b-int">interpolated</span> are filled in between those anchors
       and can easily be a few tenths of an electron off — for real planning, read your camera's curve
       on photonstophotos.net and type the exact number. The Bortle → mag/arcsec² table follows a
@@ -390,7 +400,7 @@ const CAMERAS = [
    note:"The dual-gain step at ISO 640 is documented; the electron values themselves are interpolated — check the chart for your body.",
    rn:{100:{v:3.5,s:"int"},200:{v:3.5,s:"int"},320:{v:3.45,s:"int"},400:{v:3.4,s:"int"},500:{v:3.4,s:"int"},640:{v:1.65,s:"int"},800:{v:1.6,s:"int"},1250:{v:1.55,s:"int"},1600:{v:1.5,s:"int"},2000:{v:1.5,s:"int"},2500:{v:1.48,s:"int"},3200:{v:1.45,s:"int"},6400:{v:1.4,s:"int"},12800:{v:1.35,s:"int"}}},
   {id:"r7", name:"Canon EOS R7 (32.5 MP APS-C)", pitch:3.2, sw:22.3, sh:14.8,
-   note:"Sensor specs measured (Clark). Read-noise values are interpolated — sits a little below the 90D at astro ISOs per photonstophotos comparisons; confirm on the chart. ⚠ Measured caveat: the R7 shows variable banding that does not subtract out and grows with exposure time, which limits how hard you can stretch faint detail. The frame counts here assume purely random noise, so treat them as optimistic on this body.",
+   note:"Sensor specs measured (Clark). Read-noise values are interpolated — sits a little below the 90D at astro ISOs per photonstophotos comparisons; confirm on the chart.", banding:true,
    rn:{100:{v:2.9,s:"int"},200:{v:2.6,s:"int"},320:{v:2.1,s:"int"},400:{v:1.9,s:"int"},500:{v:1.8,s:"int"},640:{v:1.7,s:"int"},800:{v:1.6,s:"int"},1250:{v:1.45,s:"int"},1600:{v:1.35,s:"int"},2000:{v:1.3,s:"int"},2500:{v:1.25,s:"int"},3200:{v:1.2,s:"int"},6400:{v:1.05,s:"int"},12800:{v:1,s:"int"}}},
   {id:"r5ii", name:"Canon EOS R5 Mark II (45 MP full frame)", pitch:4.39, sw:36.0, sh:24.0,
    note:"Measured anchor: 1.18 e⁻ at ISO 400; second gain mode from ISO 500. Other ISOs interpolated.",
@@ -539,8 +549,12 @@ function calc(){
     `change the target above if that's not what you're shooting `+
     `(never fewer than ${REJECT_MIN} frames, so the stacker can reject planes and hot pixels — rule of thumb). ${shots(nMin)}.`;
   $("nDim").textContent=fmt(nDim,0);
+  const cam=CAMERAS.find(c=>c.id===el.cam.value);
+  const bandNote=(cam&&cam.banding&&S1<=5)
+    ? ` ⚠ Faint-target regime on this body: your target delivers only ${fmt(S1,1)} e⁻ per sub — comparable to the R7's measured banding, which stacking only partly removes. Treat this count as optimistic; dither aggressively.`
+    : "";
   $("nDimD").textContent=`Reaches stacked SNR ≈ ${snrGoodT}. Beyond this you must double total time for each `+
-    `further 41% SNR gain. ${shots(nDim)}.`;
+    `further 41% SNR gain. ${shots(nDim)}.`+bandNote;
 
   /* arbitrary storage */
   const anyN=Math.max(1,Math.round(num(el.anyN,200)));
