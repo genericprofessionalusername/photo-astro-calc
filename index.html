@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracked-Rig Frame Calculator</title>
+<style>
+  :root{
+    --ink:#0b0e14;          /* night panel */
+    --panel:#10141d;
+    --panel-2:#141926;
+    --line:#1e2534;
+    --star:#e9e5da;         /* primary text */
+    --dim:#8a93a6;          /* secondary text */
+    --red:#e0524d;          /* night-vision red: results, markers */
+    --amber:#d8a048;        /* cautions, rules of thumb */
+    --teal:#5aa8a0;         /* verified badge */
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--ink)}
+  body{
+    font-family:var(--sans);color:var(--star);background:var(--ink);
+    line-height:1.55;font-size:15px;
+    background-image:radial-gradient(1px 1px at 12% 18%, #3a4155 50%, transparent 51%),
+                     radial-gradient(1px 1px at 78% 9%,  #3a4155 50%, transparent 51%),
+                     radial-gradient(1px 1px at 55% 30%, #2c3345 50%, transparent 51%),
+                     radial-gradient(1.5px 1.5px at 90% 42%, #3a4155 50%, transparent 51%),
+                     radial-gradient(1px 1px at 30% 60%, #2c3345 50%, transparent 51%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:26px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--red)}
+  h1{font-family:var(--mono);font-weight:600;font-size:clamp(20px,3.4vw,28px);letter-spacing:-.01em;margin:6px 0 8px}
+  header p{color:var(--dim);max-width:70ch}
+  h2{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+     border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:14px}
+  .cols{display:grid;grid-template-columns:340px 1fr;gap:26px;align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px;margin-bottom:20px}
+  label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:12px 0 4px}
+  label:first-of-type{margin-top:0}
+  input,select{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;
+    color:var(--star);font-family:var(--mono);font-size:14px;padding:7px 9px;
+  }
+  input:focus,select:focus{outline:2px solid var(--red);outline-offset:1px;border-color:transparent}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hint{font-size:12px;color:var(--dim);margin-top:4px}
+  .hint a{color:var(--dim)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+         padding:1px 7px;border-radius:999px;border:1px solid;vertical-align:1px;margin-left:6px}
+  .b-ver{color:var(--teal);border-color:var(--teal)}
+  .b-int{color:var(--amber);border-color:var(--amber)}
+  .b-none{color:var(--red);border-color:var(--red)}
+  .b-rot{color:var(--amber);border-color:var(--amber)}
+  .verdict{
+    border:1px solid var(--line);border-left:3px solid var(--red);border-radius:4px;
+    background:var(--panel-2);padding:14px 16px;margin-bottom:16px;
+  }
+  .verdict .big{font-family:var(--mono);font-size:26px;color:var(--red)}
+  .verdict .sub{color:var(--dim);font-size:13px;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
+     text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  td.num{font-family:var(--mono);text-align:right;white-space:nowrap;color:var(--star)}
+  td.what{color:var(--dim)}
+  td .f{font-family:var(--mono);font-size:11.5px;color:#5d667b;display:block;margin-top:2px}
+  .plan{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:560px){.plan{grid-template-columns:1fr}}
+  .plan .cell{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:12px 14px}
+  .plan .n{font-family:var(--mono);font-size:24px;color:var(--star)}
+  .plan .t{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+  .plan .d{font-size:12.5px;color:var(--dim);margin-top:6px}
+  .note{border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:4px;
+        background:var(--panel-2);padding:12px 14px;font-size:13.5px;color:var(--dim);margin-top:14px}
+  .note strong{color:var(--amber);font-weight:600}
+  svg text{font-family:var(--mono)}
+  .chartwrap{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:8px}
+  details{margin-top:12px;border:1px solid var(--line);border-radius:4px}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--dim);padding:10px 14px}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  details .inner{padding:12px 14px}
+  .storerow{display:flex;gap:10px;align-items:center;margin-top:10px}
+  .storerow input{max-width:120px}
+  .storerow .out{font-family:var(--mono);color:var(--red)}
+  footer{margin-top:30px;color:#5d667b;font-size:12.5px;border-top:1px solid var(--line);padding-top:16px;max-width:80ch}
+  .glossary dt{font-family:var(--mono);font-size:12.5px;color:var(--star);margin-top:10px}
+  .glossary dd{color:var(--dim);font-size:13px;margin-left:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Camera + lens on a star tracker</div>
+  <h1>Frame &amp; sub-exposure calculator</h1>
+  <p>Estimates how long each exposure should be and how many frames you need, from things you can
+     actually measure in the field: your camera, lens, ISO, and how dark your sky is.
+     Every intermediate number is shown so you can check the reasoning.</p>
+</header>
+
+<div class="cols">
+<!-- ========================= INPUTS ========================= -->
+<div>
+  <div class="card">
+    <h2>Camera</h2>
+    <label for="camera">Model</label>
+    <select id="camera"></select>
+    <div class="hint" id="camNote"></div>
+
+    <div class="row2">
+      <div>
+        <label for="pitch">Pixel pitch (µm)</label>
+        <input id="pitch" type="number" step="0.01" min="1">
+        <div class="hint">Size of one pixel. Sensor width ÷ pixels across.</div>
+      </div>
+      <div>
+        <label for="iso">ISO</label>
+        <select id="iso"></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div>
+        <label for="sw">Sensor width (mm)</label>
+        <input id="sw" type="number" step="0.1" min="1">
+      </div>
+      <div>
+        <label for="sh">Sensor height (mm)</label>
+        <input id="sh" type="number" step="0.1" min="1">
+      </div>
+    </div>
+
+    <label for="rn">Read noise at this ISO (electrons) <span id="rnBadge"></span></label>
+    <input id="rn" type="number" step="0.01" min="0.1">
+    <div class="hint" id="rnNote">Electrical noise added each time a frame is read out.
+      Look up your exact camera and ISO on
+      <a href="https://www.photonstophotos.net/Charts/RN_e.htm" target="_blank" rel="noopener">photonstophotos.net → Input-referred Read Noise</a>
+      and type the value here. Preset values below are pre-fills, not gospel.</div>
+  </div>
+
+  <div class="card">
+    <h2>Optics &amp; exposure</h2>
+    <div class="row2">
+      <div>
+        <label for="fl">Focal length (mm)</label>
+        <input id="fl" type="number" step="1" min="4" value="135">
+      </div>
+      <div>
+        <label for="fnum">Aperture (f-number)</label>
+        <input id="fnum" type="number" step="0.1" min="0.7" value="2.8">
+      </div>
+    </div>
+    <label for="sub">Your sub-exposure length (seconds)</label>
+    <input id="sub" type="number" step="1" min="0.1" value="60">
+    <div class="hint">One frame's shutter time. The calculator will tell you if it's longer or shorter than it needs to be.</div>
+  </div>
+
+  <div class="card">
+    <h2>Sky &amp; site</h2>
+    <label for="bortle">Bortle class (1 = darkest, 9 = inner city)</label>
+    <select id="bortle"></select>
+    <label for="sqm">Sky brightness (mag/arcsec²) <span class="badge b-rot">rule of thumb</span></label>
+    <input id="sqm" type="number" step="0.1" min="15" max="22.5">
+    <div class="hint">Pre-filled from the Bortle class using a published approximate mapping.
+      Bortle is a visual scale, so the conversion is rough — if you have a Sky Quality Meter reading, type it here instead.</div>
+    <label for="lat">Observer latitude (°, north positive)</label>
+    <input id="lat" type="number" step="0.1" min="-90" max="90" value="34">
+    <div class="hint" id="latNote"></div>
+    <label for="raw">RAW file size (MB)</label>
+    <input id="raw" type="number" step="0.1" min="1" value="30">
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Assumptions you can edit</summary>
+      <div class="inner">
+        <label for="qe">Effective quantum efficiency (0–1)</label>
+        <input id="qe" type="number" step="0.01" min="0.05" max="1" value="0.35">
+        <div class="hint">Fraction of arriving photons the sensor converts to electrons, averaged over
+          a colour camera's filters. 0.30–0.45 is typical for modern colour sensors. This is an
+          <b>assumption</b>, not a measurement of your camera.</div>
+        <label for="trans">Lens transmission (0–1)</label>
+        <input id="trans" type="number" step="0.01" min="0.3" max="1" value="0.90">
+        <label for="f0">Photon flux from a magnitude-0 star (photons/s/cm²)</label>
+        <input id="f0" type="number" step="10000" min="100000" value="880000">
+        <div class="hint">Standard reference value for a V-band-like passband. An <b>assumption</b> that sets the absolute scale.
+          The optimal sub length scales linearly with F₀ × QE × transmission, and for a broadband colour camera under a
+          light-polluted (emission-line) sky this product can be off by ~2× either way — treat the seconds as a planning
+          estimate, not a precision target. Relative results (verdicts, frame-count ratios) are much less sensitive.</div>
+        <label for="swamp">Swamp factor <span class="badge b-rot">rule of thumb</span></label>
+        <select id="swamp">
+          <option value="5">5× — tolerate a little read noise</option>
+          <option value="10" selected>10× — common recommendation</option>
+          <option value="20">20× — very conservative</option>
+        </select>
+        <div class="hint">A sub counts as "sky-limited" once the sky signal per frame exceeds this
+          multiple of read noise squared. At 10×, read noise adds under ~5% to total noise.</div>
+        <label for="tsb">Reference target brightness (mag/arcsec²)</label>
+        <input id="tsb" type="number" step="0.1" min="18" max="28" value="21.5">
+        <div class="hint">Usually set by the target picker in the frames panel. The named-object values
+          there are derived by spreading each object's catalogued total magnitude over its catalogued
+          angular size — a defensible average, but an <b>approximation</b>: real objects are much
+          brighter in their cores than their fringes.</div>
+        <div class="row2">
+          <div>
+            <label for="snrmin">SNR for "usable" <span class="badge b-rot">rule of thumb</span></label>
+            <input id="snrmin" type="number" step="1" min="2" value="5">
+          </div>
+          <div>
+            <label for="snrgood">SNR at diminishing returns <span class="badge b-rot">rule of thumb</span></label>
+            <input id="snrgood" type="number" step="1" min="5" value="20">
+          </div>
+        </div>
+        <div class="hint">SNR ≈ 5 is a common threshold for a rough but real detection;
+          past SNR ≈ 20 each added hour buys little visible improvement, because noise only falls
+          with the square root of frame count.</div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- ========================= OUTPUTS ========================= -->
+<div>
+  <div class="card">
+    <h2>Sub-exposure verdict</h2>
+    <div class="verdict">
+      <div class="big" id="vClass">—</div>
+      <div class="sub" id="vDetail"></div>
+    </div>
+    <div class="plan">
+      <div class="cell">
+        <div class="t">Optimal sub length here</div>
+        <div class="n"><span id="tOpt">—</span></div>
+        <div class="d">Shortest exposure at which sky noise swamps read noise (at your chosen swamp factor).
+          Longer subs don't hurt SNR, but risk clipping stars and losing frames to gusts or satellites.</div>
+      </div>
+      <div class="cell">
+        <div class="t">Sky vs read-noise threshold</div>
+        <div class="n"><span id="thresh">—</span></div>
+        <div class="d" id="threshD"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>How many frames</h2>
+    <label for="tgtsel">Frames are counted for this target — pick what you're shooting</label>
+    <select id="tgtsel">
+      <optgroup label="Milky Way (nightscapes, wide lenses)">
+        <option value="20.5">Galactic core region, Sagittarius (≈ 20.5 mag/arcsec²)</option>
+        <option value="21.5" selected>Milky Way band, Cygnus rifts (≈ 21.5)</option>
+      </optgroup>
+      <optgroup label="Bright showpieces (50–300 mm)">
+        <option value="21.7">M42 Orion Nebula, averaged — core is far brighter (≈ 21.7)</option>
+        <option value="22.2">M31 Andromeda, averaged over the disc (≈ 22.2)</option>
+        <option value="22.8">North America Nebula NGC 7000 (≈ 22.8)</option>
+      </optgroup>
+      <optgroup label="Fainter classics">
+        <option value="22.9">M33 Triangulum — famously low contrast (≈ 22.9)</option>
+        <option value="23.5">Pleiades reflection nebulosity / Rho Ophiuchi dust (≈ 23.5)</option>
+        <option value="23.7">Horsehead region IC 434 in broadband (≈ 23.7)</option>
+      </optgroup>
+      <optgroup label="The faint stuff">
+        <option value="24">California Nebula, faint outer nebulosity (≈ 24)</option>
+        <option value="25.5">Galactic dust / IFN — expect a serious project (≈ 25.5)</option>
+      </optgroup>
+      <option value="custom">Custom — set in "Assumptions you can edit"</option>
+    </select>
+    <div class="hint">Approximate <b>averages</b>: each object's total light spread over its full extent.
+      Real objects are uneven — M42's core runs some 4 magnitudes brighter than its wings, so the core
+      is done long before the frame count shown here, which budgets for the outskirts.
+      Each magnitude fainter needs ~6.3× the frames for the same per-pixel SNR, and wide-field images
+      viewed at screen size tolerate lower per-pixel SNR than these thresholds assume (downscaling
+      averages pixels together) — treat nightscape counts as conservative.</div>
+    <div class="plan">
+      <div class="cell">
+        <div class="t">Minimum for a usable result</div>
+        <div class="n"><span id="nMin">—</span> frames</div>
+        <div class="d" id="nMinD"></div>
+      </div>
+      <div class="cell">
+        <div class="t">Point of diminishing returns</div>
+        <div class="n"><span id="nDim">—</span> frames</div>
+        <div class="d" id="nDimD"></div>
+      </div>
+    </div>
+    <div class="chartwrap">
+      <svg id="chart" viewBox="0 0 640 300" width="100%" role="img"
+           aria-label="Stacked signal-to-noise ratio versus frame count, rising as the square root of frames, with the minimum and diminishing-returns points marked"></svg>
+    </div>
+    <div class="hint" style="margin-top:8px">Stacked SNR on the reference target grows as √(frames):
+      4× the frames is only 2× the SNR. That's why the curve flattens — and why the second marker is
+      called "diminishing returns", not "done".</div>
+    <div class="storerow">
+      <label for="anyN" style="margin:0">Storage for</label>
+      <input id="anyN" type="number" min="1" step="1" value="200">
+      <span>frames:</span>
+      <span class="out" id="anyOut">—</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Show your work — every intermediate value</h2>
+    <table>
+      <thead><tr><th>Quantity</th><th>What it means</th><th style="text-align:right">Value</th></tr></thead>
+      <tbody id="work"></tbody>
+    </table>
+    <div class="note"><strong>Why focal length barely moves these numbers:</strong> for extended objects,
+      per-pixel signal depends only on f-ratio and pixel pitch. Doubling focal length at the same
+      f-number quadruples the light-collecting area but shrinks each pixel's patch of sky by the same
+      factor — they cancel exactly (watch those two worksheet rows move in opposite directions).
+      A longer lens buys detail, not per-pixel depth: it resolves the target across more pixels, and
+      only recovers an SNR advantage if you later downsample to a common output size. Swapping lenses
+      changes these counts through the f-number, not the millimetres. (Stars are the exception — as
+      point sources they do gain with aperture, which this extended-object model doesn't score.)</div>
+    <div class="note"><strong>This math assumes nothing is clipping.</strong> If stars or sky are hitting
+      pure white in your subs, the model no longer applies — shorten the sub or lower ISO.
+      And stacking only averages away <em>random</em> noise: it will not remove the light-pollution
+      glow itself, and it cannot restore colour that skyglow has washed out. Under a bright sky,
+      more frames buy you a smoother image of a low-contrast scene — filters or a darker site are
+      what change the scene. Dark current (heat signal) is ignored here; on warm nights it adds noise
+      this calculator doesn't count.</div>
+  </div>
+
+  <div class="card">
+    <h2>Where the preset numbers come from</h2>
+    <p style="color:var(--dim);font-size:13.5px">
+      Read-noise pre-fills marked <span class="badge b-ver">verified</span> come from published
+      measurements of input-referred read noise (photonstophotos.net data or writeups citing it):
+      Sony A7S 3.56 e⁻ across ISO 125–1600 dropping to ≈0.94 e⁻ from ISO 2000 up; Canon 90D
+      1.74 e⁻ at ISO 800, 1.45 e⁻ at ISO 1600, 1.09 e⁻ at ISO 6400; Canon R6 1.26 e⁻ at ISO 12800
+      and under 2 e⁻ from ISO 6400 up; Sony A7 III's dual-gain step at ISO 640.
+      For the newer bodies: Canon R5 II 1.18 e⁻ at ISO 400 with a second gain mode from ISO 500;
+      Sony A7 IV dual-gain step at ISO 400; Nikon Z8 high-gain conversion from ISO 500;
+      Canon R7 sensor geometry (22.3 × 14.8 mm, 3.2 µm) from direct measurement, read noise slightly
+      below the 90D per chart comparisons, plus a measured banding caveat noted in its preset.
+      Values marked <span class="badge b-int">interpolated</span> are filled in between those anchors
+      and can easily be a few tenths of an electron off — for real planning, read your camera's curve
+      on photonstophotos.net and type the exact number. The Bortle → mag/arcsec² table follows a
+      published approximate mapping (Bortle 1: 21.75–22.0 … Bortle 7: 18.0–18.5; classes 8–9 below 18).
+    </p>
+    <dl class="glossary">
+      <dt>mag/arcsec² (sky brightness)</dt><dd>How bright one tiny patch of sky is, on the astronomers'
+        backwards scale: <em>higher</em> number = <em>darker</em> sky. 21.9 is a pristine site; 17 is downtown.</dd>
+      <dt>Read noise</dt><dd>Random electrical error added once per frame when the sensor is read out,
+        measured in electrons. The only noise source you pay per-frame rather than per-second.</dd>
+      <dt>Sky-limited</dt><dd>Your exposure is long enough that noise from skyglow photons, not the
+        camera's read noise, dominates. Past this point, longer subs stop helping SNR.</dd>
+      <dt>SNR (signal-to-noise ratio)</dt><dd>Target signal divided by total noise. Higher = smoother,
+        deeper image. Stacking N frames multiplies it by √N.</dd>
+    </dl>
+  </div>
+
+  <footer id="latFoot"></footer>
+</div>
+</div>
+</div>
+
+<script>
+"use strict";
+/* ---------- data ---------- */
+const BORTLE = {
+  1:{sqm:21.9, range:"21.75–22.0", name:"Excellent dark site"},
+  2:{sqm:21.7, range:"21.60–21.75", name:"Truly dark site"},
+  3:{sqm:21.5, range:"21.30–21.60", name:"Rural"},
+  4:{sqm:20.8, range:"20.30–21.30", name:"Rural/suburban transition"},
+  5:{sqm:19.8, range:"19.25–20.30", name:"Suburban"},
+  6:{sqm:18.9, range:"18.50–19.25", name:"Bright suburban"},
+  7:{sqm:18.3, range:"18.00–18.50", name:"Suburban/urban transition"},
+  8:{sqm:17.5, range:"below 18.0", name:"City"},
+  9:{sqm:17.0, range:"below 18.0", name:"Inner city"}
+};
+/* rn: iso -> {v, s:"ver"|"int"} */
+const CAMERAS = [
+  {id:"a7s", name:"Sony A7S (12 MP full frame)", pitch:8.44, sw:35.8, sh:23.9,
+   note:"Fully measured dual-gain sensor: low-gain range ISO 125–1600, high-gain from ISO 2000.",
+   rn:{100:{v:3.56,s:"ver"},200:{v:3.56,s:"ver"},400:{v:3.56,s:"ver"},800:{v:3.56,s:"ver"},
+       1600:{v:3.56,s:"ver"},3200:{v:0.94,s:"ver"},6400:{v:0.94,s:"ver"},12800:{v:0.94,s:"ver"}}},
+  {id:"90d", name:"Canon EOS 90D (32.5 MP APS-C)", pitch:3.19, sw:22.3, sh:14.9,
+   note:"Anchors at ISO 800/1600/6400 are measured; other ISOs interpolated.",
+   rn:{100:{v:3.6,s:"int"},200:{v:3.1,s:"int"},400:{v:2.4,s:"int"},800:{v:1.74,s:"ver"},
+       1600:{v:1.45,s:"ver"},3200:{v:1.26,s:"int"},6400:{v:1.09,s:"ver"},12800:{v:1.05,s:"int"}}},
+  {id:"r6", name:"Canon EOS R6 (20 MP full frame)", pitch:6.56, sw:36.0, sh:24.0,
+   note:"Measured: 1.26 e⁻ at ISO 12800, under 2 e⁻ from ISO 6400 up. Lower ISOs interpolated.",
+   rn:{100:{v:3.2,s:"int"},200:{v:3.0,s:"int"},400:{v:2.7,s:"int"},800:{v:2.4,s:"int"},
+       1600:{v:2.2,s:"int"},3200:{v:2.0,s:"int"},6400:{v:1.8,s:"int"},12800:{v:1.26,s:"ver"}}},
+  {id:"a7iii", name:"Sony A7 III (24 MP full frame)", pitch:5.93, sw:35.6, sh:23.8,
+   note:"The dual-gain step at ISO 640 is documented; the electron values themselves are interpolated — check the chart for your body.",
+   rn:{100:{v:3.5,s:"int"},200:{v:3.5,s:"int"},400:{v:3.4,s:"int"},800:{v:1.6,s:"int"},
+       1600:{v:1.5,s:"int"},3200:{v:1.45,s:"int"},6400:{v:1.4,s:"int"},12800:{v:1.35,s:"int"}}},
+  {id:"r7", name:"Canon EOS R7 (32.5 MP APS-C)", pitch:3.2, sw:22.3, sh:14.8,
+   note:"Sensor specs measured (Clark). Read-noise values are interpolated — sits a little below the 90D at astro ISOs per photonstophotos comparisons; confirm on the chart. ⚠ Measured caveat: the R7 shows variable banding that does not subtract out and grows with exposure time, which limits how hard you can stretch faint detail. The frame counts here assume purely random noise, so treat them as optimistic on this body.",
+   rn:{100:{v:2.9,s:"int"},200:{v:2.6,s:"int"},400:{v:1.9,s:"int"},800:{v:1.6,s:"int"},
+       1600:{v:1.35,s:"int"},3200:{v:1.2,s:"int"},6400:{v:1.05,s:"int"},12800:{v:1.0,s:"int"}}},
+  {id:"r5ii", name:"Canon EOS R5 Mark II (45 MP full frame)", pitch:4.39, sw:36.0, sh:24.0,
+   note:"Measured anchor: 1.18 e⁻ at ISO 400; second gain mode from ISO 500. Other ISOs interpolated.",
+   rn:{100:{v:3.2,s:"int"},200:{v:3.0,s:"int"},400:{v:1.18,s:"ver"},800:{v:1.1,s:"int"},
+       1600:{v:1.05,s:"int"},3200:{v:1.0,s:"int"},6400:{v:0.95,s:"int"},12800:{v:0.9,s:"int"}}},
+  {id:"a7iv", name:"Sony A7 IV (33 MP full frame)", pitch:5.12, sw:35.9, sh:23.9,
+   note:"Dual conversion gain step at ISO 400 is documented; electron values interpolated — check the chart.",
+   rn:{100:{v:3.4,s:"int"},200:{v:3.3,s:"int"},400:{v:1.5,s:"int"},800:{v:1.4,s:"int"},
+       1600:{v:1.3,s:"int"},3200:{v:1.25,s:"int"},6400:{v:1.2,s:"int"},12800:{v:1.15,s:"int"}}},
+  {id:"z8", name:"Nikon Z8 (45.7 MP full frame)", pitch:4.35, sw:35.9, sh:23.9,
+   note:"High-gain conversion from ISO 500 is documented (low-gain range tuned for ISO 64); electron values interpolated — check the chart.",
+   rn:{100:{v:3.0,s:"int"},200:{v:2.9,s:"int"},400:{v:2.8,s:"int"},800:{v:1.35,s:"int"},
+       1600:{v:1.3,s:"int"},3200:{v:1.25,s:"int"},6400:{v:1.2,s:"int"},12800:{v:1.15,s:"int"}}},
+  {id:"other", name:"Other — enter everything manually", pitch:4.0, sw:23.5, sh:15.6,
+   note:"Type your sensor's pixel pitch, dimensions, and read noise (from photonstophotos.net) directly.",
+   rn:{}}
+];
+const ISOS = [100,200,400,800,1600,3200,6400,12800];
+
+/* ---------- element refs ---------- */
+const $ = id => document.getElementById(id);
+const el = {cam:$("camera"), pitch:$("pitch"), sw:$("sw"), sh:$("sh"), iso:$("iso"), rn:$("rn"),
+  rnBadge:$("rnBadge"), camNote:$("camNote"), fl:$("fl"), fnum:$("fnum"), sub:$("sub"),
+  bortle:$("bortle"), sqm:$("sqm"), lat:$("lat"), raw:$("raw"), qe:$("qe"), trans:$("trans"),
+  f0:$("f0"), swamp:$("swamp"), tsb:$("tsb"), snrmin:$("snrmin"), snrgood:$("snrgood"),
+  anyN:$("anyN")};
+
+/* ---------- populate selects ---------- */
+CAMERAS.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.name;el.cam.appendChild(o);});
+ISOS.forEach(i=>{const o=document.createElement("option");o.value=i;o.textContent=i;el.iso.appendChild(o);});
+el.iso.value=800;
+Object.keys(BORTLE).forEach(k=>{const b=BORTLE[k];
+  const o=document.createElement("option");o.value=k;
+  o.textContent=`Bortle ${k} — ${b.name} (≈ ${b.sqm})`;el.bortle.appendChild(o);});
+el.bortle.value=4;
+
+function applyCamera(){
+  const c=CAMERAS.find(x=>x.id===el.cam.value);
+  el.pitch.value=c.pitch; el.sw.value=c.sw; el.sh.value=c.sh;
+  el.camNote.textContent=c.note;
+  applyRN();
+}
+function applyRN(){
+  const c=CAMERAS.find(x=>x.id===el.cam.value);
+  const d=c.rn[el.iso.value];
+  if(d){ el.rn.value=d.v;
+    el.rnBadge.innerHTML = d.s==="ver" ? '<span class="badge b-ver">verified</span>'
+                                       : '<span class="badge b-int">interpolated</span>';
+  } else {
+    if(!el.rn.value) el.rn.value=1.5;
+    el.rnBadge.innerHTML='<span class="badge b-none">no preset — enter from chart</span>';
+  }
+}
+function applyBortle(){
+  const b=BORTLE[el.bortle.value];
+  el.sqm.value=b.sqm;
+}
+el.cam.addEventListener("change",()=>{applyCamera();calc();});
+el.iso.addEventListener("change",()=>{applyRN();calc();});
+el.rn.addEventListener("input",()=>{el.rnBadge.innerHTML='<span class="badge b-int">manual</span>';calc();});
+el.bortle.addEventListener("change",()=>{applyBortle();calc();});
+["pitch","sw","sh","fl","fnum","sub","sqm","lat","raw","qe","trans","f0","swamp","snrmin","snrgood","anyN"]
+  .forEach(id=>$(id).addEventListener("input",calc));
+const tgtsel=$("tgtsel");
+tgtsel.addEventListener("change",()=>{
+  if(tgtsel.value!=="custom"){el.tsb.value=tgtsel.value;}
+  calc();
+});
+el.tsb.addEventListener("input",()=>{
+  const match=[...tgtsel.options].find(o=>o.value===el.tsb.value);
+  tgtsel.value=match?match.value:"custom";
+  calc();
+});
+
+/* ---------- helpers ---------- */
+const num=(e,f)=>{const v=parseFloat(e.value);return isFinite(v)&&v>0?v:f;};
+const fmt=(v,d=2)=>!isFinite(v)?"—":v.toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:0});
+function hm(sec){ if(!isFinite(sec))return"—";
+  const t=Math.round(sec/60),h=Math.floor(t/60),m=t%60;
+  return h>0?`${h}h ${m.toString().padStart(2,"0")}m`:`${m}m`; }
+function gb(n,mb){return (n*mb/1024);}
+
+/* ---------- core calculation ---------- */
+function calc(){
+  const pitch=num(el.pitch,4), fl=num(el.fl,135), fn=num(el.fnum,2.8);
+  const sub=num(el.sub,60), sqm=num(el.sqm,20.8), rn=num(el.rn,1.5);
+  const qe=num(el.qe,0.35), tr=num(el.trans,0.9), f0=num(el.f0,880000);
+  const C=parseFloat(el.swamp.value), tsb=num(el.tsb,24);
+  const snrMinT=num(el.snrmin,5), snrGoodT=Math.max(num(el.snrgood,20),snrMinT);
+  const rawMB=num(el.raw,30), lat=parseFloat(el.lat.value)||0;
+  const sw=num(el.sw,23.5), sh=num(el.sh,15.6);
+  const fovW=2*Math.atan(sw/(2*fl))*180/Math.PI, fovH=2*Math.atan(sh/(2*fl))*180/Math.PI;
+
+  const D=fl/fn;                                  // aperture diameter mm
+  const Acm2=Math.PI*Math.pow(D/20,2);            // area cm² (D/2 mm -> /10 cm)
+  const scale=206.265*pitch/fl;                   // arcsec per pixel
+  const pxArea=scale*scale;                       // arcsec² per pixel
+  const skyPh=f0*Math.pow(10,-0.4*sqm);           // photons/s/cm²/arcsec²
+  const skyRate=skyPh*Acm2*pxArea*qe*tr;          // e-/px/s
+  const rn2=rn*rn;
+  const tOpt=C*rn2/skyRate;                       // seconds
+  const skySignal=skyRate*sub;                    // e-/px in one sub
+  const skyLimited=skySignal>=C*rn2;
+
+  // reference target
+  const tgtRate=skyRate*Math.pow(10,-0.4*(tsb-sqm));
+  const S1=tgtRate*sub;                                    // target e- per sub
+  const var1=(skyRate+tgtRate)*sub+rn2;                    // noise variance per sub (no dark current)
+  const snr1=S1/Math.sqrt(var1);                           // SNR of one frame
+  const Nfor=s=>Math.ceil(Math.pow(s/snr1,2));
+  const REJECT_MIN=10;                                     // rule of thumb: outlier rejection needs frames
+  const nMin=Math.max(REJECT_MIN,Nfor(snrMinT));
+  const nDim=Math.max(nMin,Nfor(snrGoodT));
+
+  /* verdict */
+  $("vClass").textContent=skyLimited?"SKY-LIMITED":"READ-NOISE-LIMITED";
+  $("vClass").style.color=skyLimited?"var(--teal)":"var(--red)";
+  $("vDetail").textContent=skyLimited
+    ? `Your ${fmt(sub,0)} s subs collect ${fmt(skySignal,1)} e⁻ of sky per pixel — at or past the `+
+      `${C}× read-noise² threshold of ${fmt(C*rn2,1)} e⁻. Longer subs won't improve SNR; they only raise clipping risk.`
+    : `Your ${fmt(sub,0)} s subs collect ${fmt(skySignal,1)} e⁻ of sky per pixel — below the `+
+      `${C}× read-noise² threshold of ${fmt(C*rn2,1)} e⁻. Read noise is still costing you; expose longer or raise ISO.`;
+  $("tOpt").textContent=isFinite(tOpt)?fmt(tOpt,tOpt<10?1:0)+" s":"—";
+  $("thresh").textContent=`${fmt(skySignal,0)} / ${fmt(C*rn2,0)} e⁻`;
+  $("threshD").textContent=`Sky electrons per pixel in one sub vs the swamp threshold (${C} × read noise²). `+
+    `The sub is "sky-limited" once the left number reaches the right.`;
+
+  /* frames */
+  const shots=(n)=>`${hm(n*sub)} total · ${fmt(gb(n,rawMB),1)} GB`;
+  $("nMin").textContent=fmt(nMin,0);
+  $("nMinD").textContent=`Reaches stacked SNR ≈ ${snrMinT} per pixel on a ${fmt(tsb,1)} mag/arcsec² target — `+
+    `change the target above if that's not what you're shooting `+
+    `(never fewer than ${REJECT_MIN} frames, so the stacker can reject planes and hot pixels — rule of thumb). ${shots(nMin)}.`;
+  $("nDim").textContent=fmt(nDim,0);
+  $("nDimD").textContent=`Reaches stacked SNR ≈ ${snrGoodT}. Beyond this you must double total time for each `+
+    `further 41% SNR gain. ${shots(nDim)}.`;
+
+  /* arbitrary storage */
+  const anyN=Math.max(1,Math.round(num(el.anyN,200)));
+  $("anyOut").textContent=`${fmt(gb(anyN,rawMB),1)} GB · ${hm(anyN*sub)} of exposure`;
+
+  /* worksheet */
+  const rows=[
+    ["Aperture diameter","Focal length ÷ f-number",`${fmt(D,1)} mm`,"D = f / N"],
+    ["Light-collecting area","π (D/2)²",`${fmt(Acm2,1)} cm²`,""],
+    ["Field of view","Frame coverage on the sky",`${fmt(fovW,1)}° × ${fmt(fovH,1)}°`,"2·atan(sensor / 2f)"],
+    ["Pixel scale","Sky angle each pixel covers",`${fmt(scale,2)} ″/px`,"206.265 × pitch(µm) / f(mm)"],
+    ["Pixel sky area","Pixel scale squared",`${fmt(pxArea,1)} arcsec²`,""],
+    ["Sky brightness in use","From Bortle mapping or your SQM entry",`${fmt(sqm,2)} mag/arcsec²`,""],
+    ["Sky photon flux","Photons reaching the lens per cm² per arcsec²",`${skyPh.toExponential(2)} ph/s/cm²/arcsec²`,"F₀ × 10^(−0.4 × SQM)"],
+    ["Sky electron rate","× area × pixel sky area × QE × transmission",`${fmt(skyRate,3)} e⁻/px/s`,""],
+    ["Read noise at ISO "+el.iso.value,"From preset or your entry",`${fmt(rn,2)} e⁻ (² = ${fmt(rn2,2)})`,""],
+    ["Swamp threshold",`${C} × read noise² — rule of thumb`,`${fmt(C*rn2,1)} e⁻`,""],
+    ["Sky signal in one sub","Sky rate × sub length",`${fmt(skySignal,1)} e⁻`,""],
+    ["Optimal sub length","Threshold ÷ sky rate",`${fmt(tOpt,tOpt<10?1:0)} s`,"t = C·RN² / sky rate"],
+    ["Reference target rate",`${fmt(tsb,1)} mag/arcsec² target through same optics`,`${fmt(tgtRate,4)} e⁻/px/s`,""],
+    ["SNR of a single sub","Target signal ÷ √(sky+target+read noise²)",`${fmt(snr1,3)}`,"stack of N ⇒ SNR × √N"]
+  ];
+  $("work").innerHTML=rows.map(r=>
+    `<tr><td>${r[0]}</td><td class="what">${r[1]}${r[3]?`<span class="f">${r[3]}</span>`:""}</td><td class="num">${r[2]}</td></tr>`).join("");
+
+  /* latitude note (informational only) */
+  const aLat=Math.abs(lat);
+  let latMsg="Latitude does not enter the SNR math for a tracked rig — it's shown for planning context only.";
+  if(aLat>48.6) latMsg+=` At ${fmt(aLat,1)}°, the sun never reaches 18° below the horizon around midsummer, so there is a stretch of the year with no fully dark sky.`;
+  else if(aLat>44) latMsg+=` At ${fmt(aLat,1)}°, midsummer astronomical darkness is short — plan totals across more nights in summer.`;
+  $("latNote").textContent=latMsg;
+  $("latFoot").textContent="Model scope: broadband imaging, no filters, no moon, dark current ignored, target well above the horizon. "+
+    "All 'rule of thumb' labels mark conventions, not physics. Sources: photonstophotos.net read-noise measurements (and writeups citing them); published approximate Bortle→SQM mapping.";
+
+  drawChart(snr1,nMin,nDim,snrMinT,snrGoodT);
+}
+
+/* ---------- SNR curve ---------- */
+function drawChart(snr1,nMin,nDim,sMin,sGood){
+  const svg=$("chart"); const W=640,H=300,L=54,R=16,T=18,B=40;
+  const Nmax=Math.max(Math.ceil(nDim*1.6),20);
+  const Smax=snr1*Math.sqrt(Nmax)*1.08;
+  const x=n=>L+(W-L-R)*(n/Nmax);
+  const y=s=>H-B-(H-T-B)*(s/Smax);
+  let p="";
+  for(let i=0;i<=200;i++){const n=Nmax*i/200;p+=(i?"L":"M")+x(n).toFixed(1)+" "+y(snr1*Math.sqrt(n)).toFixed(1)+" ";}
+  const gx=[],gy=[];
+  const xt=5; for(let i=1;i<=xt;i++){const n=Math.round(Nmax*i/xt);
+    gx.push(`<line x1="${x(n)}" y1="${T}" x2="${x(n)}" y2="${H-B}" stroke="#1e2534"/>`+
+            `<text x="${x(n)}" y="${H-B+16}" fill="#8a93a6" font-size="11" text-anchor="middle">${n}</text>`);}
+  for(let i=1;i<=4;i++){const s=Smax*i/4;
+    gy.push(`<line x1="${L}" y1="${y(s)}" x2="${W-R}" y2="${y(s)}" stroke="#1e2534"/>`+
+            `<text x="${L-8}" y="${y(s)+4}" fill="#8a93a6" font-size="11" text-anchor="end">${s.toFixed(s<10?1:0)}</text>`);}
+  const mark=(n,s,lab)=>{
+    const mx=x(Math.min(n,Nmax)),my=y(snr1*Math.sqrt(n));
+    return `<line x1="${mx}" y1="${my}" x2="${mx}" y2="${H-B}" stroke="#e0524d" stroke-dasharray="3 4"/>`+
+      `<circle cx="${mx}" cy="${my}" r="4.5" fill="#0b0e14" stroke="#e0524d" stroke-width="2"/>`+
+      `<text x="${Math.min(mx+7,W-140)}" y="${my-8}" fill="#e0524d" font-size="11">${lab}</text>`;};
+  svg.innerHTML=
+    gx.join("")+gy.join("")+
+    `<line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="#3a4155"/>`+
+    `<line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="#3a4155"/>`+
+    `<path d="${p}" fill="none" stroke="#e9e5da" stroke-width="2"/>`+
+    mark(nMin,sMin,`usable · ${nMin} fr`)+
+    mark(nDim,sGood,`dim. returns · ${nDim} fr`)+
+    `<text x="${(L+W-R)/2}" y="${H-6}" fill="#8a93a6" font-size="11" text-anchor="middle">frames stacked</text>`+
+    `<text x="14" y="${(T+H-B)/2}" fill="#8a93a6" font-size="11" text-anchor="middle" transform="rotate(-90 14 ${(T+H-B)/2})">stacked SNR</text>`;
+}
+
+/* ---------- init ---------- */
+applyCamera(); applyBortle(); calc();
+</script>
+</body>
+</html>
